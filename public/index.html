@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXUS · Deep Tech Due Diligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="/marked.umd.js"></script>
+  <style>
+    :root {
+      --bg: #07090e;
+      --bg2: #0c0f18;
+      --bg3: #111520;
+      --gold: #c9a347;
+      --gold-bright: #e8c06a;
+      --gold-dim: rgba(201, 163, 71, 0.18);
+      --gold-faint: rgba(201, 163, 71, 0.06);
+      --text: #ddd8cc;
+      --text2: #8a8680;
+      --text3: #4a4845;
+      --border: rgba(201, 163, 71, 0.13);
+      --border-hover: rgba(201, 163, 71, 0.35);
+      --red: #b85555;
+      --red-dim: rgba(184, 85, 85, 0.12);
+      --green: #4d9e72;
+      --green-dim: rgba(77, 158, 114, 0.12);
+      --amber: rgba(201, 163, 71, 0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Grain overlay for depth */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 9998; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+      opacity: 0.028;
+      mix-blend-mode: screen;
+    }
+
+    /* ─── BACKGROUND ─── */
+    #bg-canvas {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none; opacity: 0.35;
+    }
+
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(201,163,71,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,163,71,0.025) 1px, transparent 1px);
+      background-size: 72px 72px;
+    }
+
+    .bg-glow {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% -5%, rgba(201,163,71,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 85% 105%, rgba(30,50,110,0.12) 0%, transparent 60%);
+      animation: glowShift 18s ease-in-out infinite alternate;
+    }
+
+    @keyframes glowShift {
+      from { transform: scale(1); opacity: 0.7; }
+      to   { transform: scale(1.08); opacity: 1; }
+    }
+
+    /* ─── LAYOUT ─── */
+    .wrap { position: relative; z-index: 1; max-width: 1320px; margin: 0 auto; padding: 0 48px; }
+
+    /* ─── HEADER ─── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      padding: 18px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(7, 9, 14, 0.82);
+      backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo { display: flex; align-items: center; gap: 14px; }
+
+    .logo-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 600; letter-spacing: 6px;
+      color: var(--gold); text-transform: uppercase;
+    }
+
+    .logo-sep {
+      width: 1px; height: 18px;
+      background: var(--border);
+    }
+
+    .logo-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: 3px; color: var(--text3);
+      text-transform: uppercase;
+    }
+
+    .header-status {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--text3); letter-spacing: 1px;
+    }
+
+    .status-dot {
+      width: 5px; height: 5px; border-radius: 50%; background: var(--green);
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ─── HERO ─── */
+    .hero {
+      padding: 152px 0 72px;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 5px; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 28px;
+      opacity: 0; animation: riseUp 0.7s ease forwards 0.1s;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(54px, 7vw, 100px);
+      font-weight: 300; line-height: 1.03; letter-spacing: -1px;
+      margin-bottom: 22px;
+      opacity: 0; animation: riseUp 0.7s ease forwards 0.25s;
+    }
+
+    .hero-title em { font-style: italic; color: var(--gold); }
+
+    .hero-sub {
+      font-size: 15px; line-height: 1.75; color: var(--text2);
+      max-width: 480px; margin-bottom: 64px;
+      opacity: 0; animation: riseUp 0.7s ease forwards 0.4s;
+    }
+
+    @keyframes riseUp {
+      from { opacity:0; transform:translateY(18px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ─── UPLOAD ─── */
+    .upload-wrap {
+      width: 100%; max-width: 700px;
+      opacity: 0; animation: riseUp 0.7s ease forwards 0.55s;
+    }
+
+    .drop-zone {
+      position: relative; border: none; border-radius: 0;
+      padding: 56px 36px; text-align: center; cursor: pointer;
+      background: rgba(255,255,255,0.014);
+      transition: background 0.3s;
+    }
+
+    /* Corner accent borders */
+    .drop-zone::before, .drop-zone::after,
+    .drop-zone .corner-tl, .drop-zone .corner-br {
+      content: ''; position: absolute;
+      width: 24px; height: 24px;
+      transition: width 0.3s, height 0.3s, opacity 0.3s;
+    }
+    .drop-zone::before { top: 0; left: 0; border-top: 1px solid var(--gold-dim); border-left: 1px solid var(--gold-dim); }
+    .drop-zone::after  { top: 0; right: 0; border-top: 1px solid var(--gold-dim); border-right: 1px solid var(--gold-dim); }
+    .drop-zone .corner-tl { bottom: 0; left: 0; border-bottom: 1px solid var(--gold-dim); border-left: 1px solid var(--gold-dim); }
+    .drop-zone .corner-br { bottom: 0; right: 0; border-bottom: 1px solid var(--gold-dim); border-right: 1px solid var(--gold-dim); }
+
+    .drop-zone:hover, .drop-zone.over {
+      background: rgba(201,163,71,0.03);
+    }
+    .drop-zone:hover::before, .drop-zone:hover::after,
+    .drop-zone:hover .corner-tl, .drop-zone:hover .corner-br,
+    .drop-zone.over::before, .drop-zone.over::after,
+    .drop-zone.over .corner-tl, .drop-zone.over .corner-br {
+      width: 40px; height: 40px;
+      border-color: rgba(201,163,71,0.5);
+    }
+    .drop-zone.over { background: rgba(201,163,71,0.04); }
+
+    .drop-icon {
+      margin: 0 auto 20px;
+      width: 48px; height: 48px;
+    }
+
+    .drop-icon svg { width: 100%; height: 100%; stroke: var(--gold); opacity: 0.65; }
+
+    .drop-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px; font-weight: 400; margin-bottom: 8px;
+    }
+
+    .drop-hint {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 2px; color: var(--text3); text-transform: uppercase;
+    }
+
+    .drop-types {
+      margin-top: 22px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+    }
+
+    .ftype {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: 1.5px; padding: 3px 9px;
+      border: 1px solid var(--text3); border-radius: 2px; color: var(--text3);
+      text-transform: uppercase;
+    }
+
+    #file-input { display: none; }
+
+    /* File preview strip */
+    .file-strip {
+      display: none; align-items: center; gap: 14px;
+      padding: 16px 20px; margin-top: 14px;
+      background: rgba(201,163,71,0.05); border: 1px solid rgba(201,163,71,0.18);
+      border-radius: 3px;
+    }
+
+    .file-strip.on { display: flex; }
+
+    .ficon {
+      width: 34px; height: 42px; border-radius: 2px; flex-shrink: 0;
+      background: rgba(201,163,71,0.08); border: 1px solid rgba(201,163,71,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace; font-size: 8px;
+      color: var(--gold); letter-spacing: 0; text-transform: uppercase;
+    }
+
+    .finfo { flex: 1; text-align: left; }
+    .fname { font-size: 13px; color: var(--text); margin-bottom: 2px; }
+    .fmeta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text3); }
+
+    .fremove {
+      background: none; border: none; color: var(--text3); cursor: pointer;
+      font-size: 14px; padding: 4px; transition: color 0.2s;
+    }
+    .fremove:hover { color: var(--red); }
+
+    /* Analyze button */
+    .analyze-btn {
+      width: 100%; margin-top: 16px; padding: 17px 32px;
+      background: transparent; border: 1px solid var(--gold);
+      color: var(--gold); font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+      cursor: pointer; border-radius: 3px; position: relative; overflow: hidden;
+      transition: color 0.35s;
+    }
+
+    .analyze-btn::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--gold);
+      transform: translateX(-100%);
+      transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+      z-index: 0;
+    }
+
+    .analyze-btn:hover::after { transform: translateX(0); }
+    .analyze-btn:hover { color: var(--bg); }
+    .analyze-btn span { position: relative; z-index: 1; }
+
+    .analyze-btn:disabled {
+      border-color: var(--text3); color: var(--text3); cursor: not-allowed;
+    }
+    .analyze-btn:disabled::after { display: none; }
+    .analyze-btn:disabled:hover { color: var(--text3); }
+
+    /* ─── LOADING ─── */
+    #loading-view {
+      display: none; padding: 120px 0 80px;
+    }
+
+    .loading-head { text-align: center; margin-bottom: 56px; }
+
+    .loading-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 30px; font-weight: 300; margin-bottom: 10px;
+    }
+
+    .loading-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 3px; color: var(--text3); text-transform: uppercase;
+    }
+
+    .steps { display: flex; flex-direction: column; max-width: 640px; margin: 0 auto; }
+
+    .step {
+      display: flex; align-items: flex-start; gap: 18px;
+      padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+      opacity: 0.25; transition: opacity 0.4s;
+    }
+
+    .step.active { opacity: 1; }
+    .step.done { opacity: 0.55; }
+
+    .step-dot {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text3);
+      transition: all 0.3s;
+    }
+
+    .step.active .step-dot {
+      border-color: var(--gold); color: var(--gold);
+      box-shadow: 0 0 0 0 rgba(201,163,71,0.4);
+      animation: ringPulse 1.2s ease-in-out infinite;
+    }
+
+    .step.done .step-dot {
+      border-color: var(--green); background: var(--green-dim); color: var(--green);
+    }
+
+    @keyframes ringPulse {
+      0%   { box-shadow: 0 0 0 0   rgba(201,163,71,0.4); }
+      70%  { box-shadow: 0 0 0 8px rgba(201,163,71,0); }
+      100% { box-shadow: 0 0 0 0   rgba(201,163,71,0); }
+    }
+
+    .step-body { flex: 1; }
+    .step-label { font-size: 14px; color: var(--text); margin-bottom: 3px; }
+    .step-desc { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text3); }
+
+    .prog-track {
+      max-width: 640px; margin: 36px auto 0;
+      height: 1px; background: rgba(255,255,255,0.06); border-radius: 1px; overflow: hidden;
+    }
+
+    .prog-fill {
+      height: 100%; border-radius: 1px; width: 0%;
+      background: linear-gradient(90deg, rgba(201,163,71,0.3), var(--gold));
+      transition: width 0.6s ease;
+    }
+
+    /* AI thinking state */
+    #ai-thinking {
+      display: none; text-align: center; padding: 48px 0 0; max-width: 640px; margin: 0 auto;
+    }
+
+    #ai-thinking.on { display: block; }
+
+    .thinking-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: 3px; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 24px;
+      animation: fadeInOut 2s ease-in-out infinite;
+    }
+
+    @keyframes fadeInOut { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+    .thinking-bar-track {
+      height: 1px; background: rgba(255,255,255,0.06); border-radius: 1px;
+      overflow: hidden; position: relative;
+    }
+
+    .thinking-bar-fill {
+      position: absolute; height: 100%; width: 35%;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      border-radius: 1px;
+      animation: scanBar 2.2s ease-in-out infinite;
+    }
+
+    @keyframes scanBar {
+      0%   { left: -40%; }
+      100% { left: 110%; }
+    }
+
+    .thinking-dots {
+      margin-top: 20px; display: flex; justify-content: center; gap: 8px;
+    }
+
+    .thinking-dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--gold); opacity: 0.2;
+      animation: dotPop 1.4s ease-in-out infinite;
+    }
+
+    .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dotPop { 0%,80%,100%{opacity:0.2;transform:scale(1)} 40%{opacity:1;transform:scale(1.4)} }
+
+    /* ─── REPORT VIEW ─── */
+    #report-view {
+      display: none; padding: 100px 0 80px;
+    }
+
+    .report-layout { display: flex; gap: 48px; align-items: flex-start; }
+
+    /* TOC */
+    .toc {
+      width: 210px; flex-shrink: 0;
+      position: sticky; top: 90px;
+    }
+
+    .toc-head {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: 3px; color: var(--text3);
+      text-transform: uppercase; margin-bottom: 18px;
+    }
+
+    .toc-link {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 8px 0 8px 12px; margin-left: -12px;
+      border-left: 2px solid transparent; cursor: pointer;
+      transition: border-color 0.2s;
+      text-decoration: none;
+    }
+
+    .toc-link:hover { border-left-color: var(--gold-dim); }
+    .toc-link.active { border-left-color: var(--gold); }
+
+    .toc-n {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; color: var(--gold); opacity: 0.55;
+      flex-shrink: 0; margin-top: 2px;
+    }
+
+    .toc-t {
+      font-size: 12px; color: var(--text2); line-height: 1.45;
+      transition: color 0.2s;
+    }
+
+    .toc-link:hover .toc-t,
+    .toc-link.active .toc-t { color: var(--text); }
+
+    /* Report header */
+    .report-main { flex: 1; min-width: 0; }
+
+    .report-top {
+      padding-bottom: 40px; margin-bottom: 48px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .report-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: 4px; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 16px;
+    }
+
+    .report-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(28px, 4vw, 42px); font-weight: 300;
+      line-height: 1.2; margin-bottom: 18px;
+    }
+
+    .report-meta-row {
+      display: flex; gap: 24px; flex-wrap: wrap;
+    }
+
+    .meta-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--text3);
+    }
+
+    .meta-chip span { color: var(--text2); }
+
+    /* Streaming content */
+    #stream-content {
+      min-height: 200px; position: relative;
+    }
+
+    .cursor {
+      display: inline-block; width: 2px; height: 1.1em;
+      background: var(--gold); margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: cursorBlink 1s step-end infinite;
+    }
+
+    @keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ─── MARKDOWN STYLES ─── */
+    .md-body h1, .md-body h2, .md-body h3, .md-body h4, .md-body h5 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 400; color: var(--text);
+    }
+
+    .md-body h1 {
+      font-size: 34px; margin: 48px 0 20px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .md-body h2 {
+      font-size: 24px; margin: 52px 0 18px;
+      padding: 14px 20px;
+      border-left: 2px solid var(--gold);
+      background: linear-gradient(90deg, var(--gold-faint) 0%, transparent 80%);
+      display: block; letter-spacing: 0.3px;
+    }
+
+    .md-body h2::before { display: none; }
+
+    .md-body h3 {
+      font-size: 19px; margin: 32px 0 12px; color: var(--text);
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .md-body h4 {
+      font-size: 15px; margin: 22px 0 10px;
+      color: var(--gold); letter-spacing: 0.5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    }
+
+    .md-body p {
+      font-size: 15px; line-height: 1.82; color: var(--text2);
+      margin-bottom: 16px;
+    }
+
+    .md-body strong { color: var(--text); font-weight: 500; }
+
+    .md-body em { color: var(--gold-bright); font-style: normal; }
+
+    .md-body ul, .md-body ol {
+      padding-left: 22px; margin-bottom: 16px;
+    }
+
+    .md-body li {
+      font-size: 15px; line-height: 1.75; color: var(--text2); margin-bottom: 7px;
+    }
+
+    .md-body ul li::marker { color: var(--gold); }
+    .md-body ol li::marker { color: var(--gold); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+    .md-body hr {
+      border: none; border-top: 1px solid var(--border);
+      margin: 40px 0;
+    }
+
+    .md-body blockquote {
+      border-left: 2px solid var(--gold);
+      padding: 14px 20px; margin: 24px 0;
+      background: rgba(201,163,71,0.04);
+    }
+
+    .md-body blockquote p {
+      color: var(--text2); font-style: italic; margin-bottom: 0;
+    }
+
+    .md-body code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; background: var(--bg3);
+      padding: 2px 7px; border-radius: 3px; color: var(--gold-bright);
+      border: 1px solid var(--border);
+    }
+
+    .md-body pre {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 4px; padding: 20px; margin: 20px 0; overflow-x: auto;
+    }
+
+    .md-body pre code {
+      background: none; border: none; padding: 0; color: var(--text);
+      font-size: 13px;
+    }
+
+    /* Tables */
+    .md-body table {
+      width: 100%; border-collapse: collapse; margin: 28px 0; font-size: 13.5px;
+      border: 1px solid var(--border); overflow: hidden;
+    }
+
+    .md-body thead { border-bottom: 1px solid var(--gold-dim); }
+
+    .md-body th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--gold); padding: 13px 18px; text-align: left;
+      background: rgba(201,163,71,0.06);
+    }
+
+    .md-body td {
+      padding: 13px 18px; color: var(--text2); line-height: 1.6;
+      border-bottom: 1px solid rgba(255,255,255,0.035);
+      vertical-align: top;
+    }
+
+    .md-body tbody tr:hover td { background: rgba(255,255,255,0.018); }
+    .md-body tr:last-child td { border-bottom: none; }
+
+    /* ─── ACTIONS ─── */
+    .report-actions {
+      margin-top: 52px; padding-top: 28px; border-top: 1px solid var(--border);
+      display: flex; gap: 12px;
+    }
+
+    .btn {
+      padding: 13px 26px; border-radius: 3px; cursor: pointer;
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      letter-spacing: 3px; text-transform: uppercase;
+      background: transparent; transition: all 0.22s;
+    }
+
+    .btn-gold {
+      border: 1px solid var(--gold-dim); color: var(--gold);
+    }
+    .btn-gold:hover { border-color: var(--gold); background: var(--gold-faint); }
+
+    .btn-ghost {
+      border: 1px solid rgba(255,255,255,0.07); color: var(--text3);
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.14); color: var(--text2); }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border); padding: 28px 0;
+      text-align: center; position: relative; z-index: 1;
+    }
+
+    .footer-txt {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--text3); letter-spacing: 1px;
+    }
+
+    .footer-txt span { color: var(--gold); opacity: 0.5; }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 860px) {
+      .wrap { padding: 0 24px; }
+      header { padding: 16px 24px; }
+      .report-layout { flex-direction: column; }
+      .toc { width: 100%; position: static; margin-bottom: 32px; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-name">NEXUS</div>
+    <div class="logo-sep"></div>
+    <div class="logo-tag">Deep Tech Intelligence</div>
+  </div>
+  <div class="header-status">
+    <div class="status-dot"></div>
+    <span>Qwen2.5 72B · Local</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- HERO / UPLOAD VIEW -->
+  <div id="upload-view">
+    <section class="hero">
+      <div class="hero-eyebrow">Investment Due Diligence Platform</div>
+      <h1 class="hero-title">Strip the hype.<em> See the truth.</em></h1>
+      <p class="hero-sub">Upload a pitch deck, technical document, or research report. Get a surgical due diligence analysis from an MIT-trained deep tech investor — running entirely on your machine.</p>
+
+      <div class="upload-wrap">
+        <div class="drop-zone" id="drop-zone">
+          <div class="corner-tl"></div>
+          <div class="corner-br"></div>
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <div class="drop-title">Drag & drop or click to upload</div>
+          <div class="drop-hint">PDF · PPTX · DOCX · TXT supported</div>
+          <div class="drop-types">
+            <span class="ftype">PDF</span>
+            <span class="ftype">PPTX</span>
+            <span class="ftype">DOCX</span>
+            <span class="ftype">TXT</span>
+          </div>
+        </div>
+
+        <input type="file" id="file-input" accept=".pdf,.pptx,.docx,.txt,.md">
+
+        <div class="file-strip" id="file-strip">
+          <div class="ficon" id="ficon-ext">PDF</div>
+          <div class="finfo">
+            <div class="fname" id="fname"></div>
+            <div class="fmeta" id="fmeta"></div>
+          </div>
+          <button class="fremove" id="fremove" title="Remove">✕</button>
+        </div>
+
+        <button class="analyze-btn" id="analyze-btn" disabled>
+          <span id="btn-text">Run Deep Analysis</span>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- LOADING VIEW -->
+  <div id="loading-view">
+    <div class="loading-head">
+      <div class="loading-title">Running Due Diligence Protocol</div>
+      <div class="loading-sub">MIT · Sovereign Wealth Fund · 10Y Industry R&D</div>
+    </div>
+    <div class="steps" id="steps">
+      <div class="step" id="step-0">
+        <div class="step-dot">01</div>
+        <div class="step-body">
+          <div class="step-label">Parsing Document</div>
+          <div class="step-desc">Extracting text · Structuring content</div>
+        </div>
+      </div>
+      <div class="step" id="step-1">
+        <div class="step-dot">02</div>
+        <div class="step-body">
+          <div class="step-label">Sector ID & Expert Persona</div>
+          <div class="step-desc">Identifying sub-sector · Loading domain expertise</div>
+        </div>
+      </div>
+      <div class="step" id="step-2">
+        <div class="step-dot">03</div>
+        <div class="step-body">
+          <div class="step-label">First-Principles Deconstruction</div>
+          <div class="step-desc">Physics constraints · Innovation analysis</div>
+        </div>
+      </div>
+      <div class="step" id="step-3">
+        <div class="step-dot">04</div>
+        <div class="step-body">
+          <div class="step-label">Red-Teaming Commercial Logic</div>
+          <div class="step-desc">Challenging assumptions · Risk matrix</div>
+        </div>
+      </div>
+      <div class="step" id="step-4">
+        <div class="step-dot">05</div>
+        <div class="step-body">
+          <div class="step-label">Valuation & Investment Thesis</div>
+          <div class="step-desc">Milestone mapping · Decision framework</div>
+        </div>
+      </div>
+    </div>
+    <div class="prog-track">
+      <div class="prog-fill" id="prog-fill"></div>
+    </div>
+
+    <div id="ai-thinking">
+      <div class="thinking-label">Model is analyzing — this may take a few minutes</div>
+      <div class="thinking-bar-track">
+        <div class="thinking-bar-fill"></div>
+      </div>
+      <div class="thinking-dots">
+        <div class="thinking-dot"></div>
+        <div class="thinking-dot"></div>
+        <div class="thinking-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORT VIEW -->
+  <div id="report-view">
+    <div class="report-layout">
+
+      <!-- TOC Sidebar -->
+      <aside class="toc" id="toc">
+        <div class="toc-head">Contents</div>
+        <a class="toc-link active" data-section="s1" href="#s1">
+          <span class="toc-n">01</span>
+          <span class="toc-t">Sector & Expert Persona</span>
+        </a>
+        <a class="toc-link" data-section="s2" href="#s2">
+          <span class="toc-n">02</span>
+          <span class="toc-t">Core Verdict</span>
+        </a>
+        <a class="toc-link" data-section="s3" href="#s3">
+          <span class="toc-n">03</span>
+          <span class="toc-t">Innovation Deep-Dive</span>
+        </a>
+        <a class="toc-link" data-section="s4" href="#s4">
+          <span class="toc-n">04</span>
+          <span class="toc-t">Risk Assessment</span>
+        </a>
+        <a class="toc-link" data-section="s5" href="#s5">
+          <span class="toc-n">05</span>
+          <span class="toc-t">Verification Questions</span>
+        </a>
+        <a class="toc-link" data-section="s6" href="#s6">
+          <span class="toc-n">06</span>
+          <span class="toc-t">Scorecard</span>
+        </a>
+        <a class="toc-link" data-section="s7" href="#s7">
+          <span class="toc-n">07</span>
+          <span class="toc-t">Valuation & Investment Thesis</span>
+        </a>
+      </aside>
+
+      <!-- Report Content -->
+      <div class="report-main">
+        <div class="report-top">
+          <div class="report-badge">Deep Tech Due Diligence Report · NEXUS Protocol</div>
+          <div class="report-name" id="report-name">Due Diligence Report</div>
+          <div class="report-meta-row">
+            <div class="meta-chip">Generated: <span id="report-time"></span></div>
+            <div class="meta-chip">Model: <span>Qwen2.5 72B · Local</span></div>
+            <div class="meta-chip">Source: <span id="report-file"></span></div>
+          </div>
+        </div>
+
+        <div id="stream-content" class="md-body"></div>
+
+        <div class="report-actions" id="report-actions" style="display:none;">
+          <button class="btn btn-gold" id="download-btn">Download Report (.doc)</button>
+          <button class="btn btn-ghost" id="new-btn">New Analysis</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<footer>
+  <div class="footer-txt">
+    NEXUS Deep Tech Intelligence &nbsp;·&nbsp;
+    <span>Qwen2.5 72B · Running Locally</span> &nbsp;·&nbsp;
+    For reference only — not investment advice
+  </div>
+</footer>
+
+<script>
+// ─── PARTICLES ───────────────────────────────────────────
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let pts = [];
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+function initPts() {
+  pts = Array.from({ length: 70 }, () => ({
+    x:  Math.random() * canvas.width,
+    y:  Math.random() * canvas.height,
+    vx: (Math.random() - 0.5) * 0.25,
+    vy: (Math.random() - 0.5) * 0.25,
+    r:  Math.random() * 1.2 + 0.4,
+    a:  Math.random() * 0.35 + 0.08,
+    c:  Math.random() > 0.65 ? '#c9a347' : '#3a5080'
+  }));
+}
+
+function tick() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  pts.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = p.c;
+    ctx.globalAlpha = p.a;
+    ctx.fill();
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0 || p.x > canvas.width)  p.vx *= -1;
+    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+  });
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(tick);
+}
+
+resize(); initPts(); tick();
+window.addEventListener('resize', () => { resize(); initPts(); });
+
+// ─── UPLOAD LOGIC ────────────────────────────────────────
+const dropZone   = document.getElementById('drop-zone');
+const fileInput  = document.getElementById('file-input');
+const fileStrip  = document.getElementById('file-strip');
+const ficonExt   = document.getElementById('ficon-ext');
+const fnameEl    = document.getElementById('fname');
+const fmetaEl    = document.getElementById('fmeta');
+const fremoveBtn = document.getElementById('fremove');
+const analyzeBtn = document.getElementById('analyze-btn');
+const btnText    = document.getElementById('btn-text');
+
+let currentFile = null;
+
+dropZone.addEventListener('click', () => fileInput.click());
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('over');
+});
+
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f) setFile(f);
+});
+
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) setFile(e.target.files[0]);
+});
+
+function setFile(f) {
+  currentFile = f;
+  const ext  = f.name.split('.').pop().toUpperCase();
+  const size = (f.size / 1024 / 1024).toFixed(1);
+  ficonExt.textContent = ext;
+  fnameEl.textContent  = f.name;
+  fmetaEl.textContent  = `${size} MB · Ready`;
+  fileStrip.classList.add('on');
+  analyzeBtn.disabled = false;
+}
+
+fremoveBtn.addEventListener('click', () => {
+  currentFile = null;
+  fileStrip.classList.remove('on');
+  analyzeBtn.disabled = true;
+  fileInput.value = '';
+});
+
+// ─── VIEWS ───────────────────────────────────────────────
+const uploadView  = document.getElementById('upload-view');
+const loadingView = document.getElementById('loading-view');
+const reportView  = document.getElementById('report-view');
+
+function showView(name) {
+  uploadView.style.display  = name === 'upload'  ? 'block' : 'none';
+  loadingView.style.display = name === 'loading' ? 'block' : 'none';
+  reportView.style.display  = name === 'report'  ? 'block' : 'none';
+}
+
+// ─── LOADING STEPS ───────────────────────────────────────
+const STEPS      = [0, 1, 2, 3, 4];
+const STEP_TIMES = [800, 1200, 1800, 1400, 1000]; // ms each
+
+function resetSteps() {
+  STEPS.forEach(i => {
+    const el = document.getElementById(`step-${i}`);
+    el.classList.remove('active', 'done');
+    el.querySelector('.step-dot').textContent = String(i + 1).padStart(2, '0');
+  });
+  document.getElementById('prog-fill').style.width = '0%';
+  document.getElementById('ai-thinking').classList.remove('on');
+}
+
+async function runLoadingSteps() {
+  const total = STEP_TIMES.reduce((a, b) => a + b, 0);
+  let elapsed = 0;
+
+  for (const i of STEPS) {
+    const el = document.getElementById(`step-${i}`);
+    el.classList.add('active');
+    await sleep(STEP_TIMES[i]);
+    elapsed += STEP_TIMES[i];
+    document.getElementById('prog-fill').style.width = `${(elapsed / total) * 100}%`;
+    el.classList.remove('active');
+    el.classList.add('done');
+    el.querySelector('.step-dot').textContent = '✓';
+  }
+
+  // After steps, show indeterminate "Claude is thinking" bar
+  document.getElementById('ai-thinking').classList.add('on');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ─── ANALYSIS ────────────────────────────────────────────
+let accText = '';
+let renderTimer = null;
+const streamEl = document.getElementById('stream-content');
+
+analyzeBtn.addEventListener('click', startAnalysis);
+
+async function startAnalysis() {
+  if (!currentFile) return;
+
+  analyzeBtn.disabled = true;
+  btnText.textContent = 'Analyzing...';
+  accText = '';
+  streamEl.innerHTML = '';
+
+  // Transition to loading
+  uploadView.style.opacity = '0';
+  uploadView.style.transition = 'opacity 0.4s';
+  await sleep(400);
+  showView('loading');
+  resetSteps();
+
+  // Set report metadata
+  document.getElementById('report-name').textContent = currentFile.name.replace(/\.[^.]+$/, '') + ' · Due Diligence Report';
+  document.getElementById('report-time').textContent = new Date().toLocaleString('zh-CN');
+  document.getElementById('report-file').textContent = currentFile.name;
+
+  // Run steps animation in parallel with API call
+  runLoadingSteps();
+
+  try {
+    const formData = new FormData();
+    formData.append('file', currentFile);
+
+    const resp = await fetch('/analyze', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || 'Server error');
+    }
+
+    // Consume SSE stream
+    const reader  = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let   buf     = '';
+
+    // Switch to report view once we start receiving content
+    let switched = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (!raw) continue;
+
+        try {
+          const msg = JSON.parse(raw);
+
+          if (msg.error) throw new Error(msg.error);
+
+          if (msg.text) {
+            // Switch to report on first text chunk
+            if (!switched) {
+              document.getElementById('ai-thinking').classList.remove('on');
+              showView('report');
+              switched = true;
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            accText += msg.text;
+            scheduleRender();
+          }
+
+          if (msg.done) {
+            finalRender();
+            document.getElementById('report-actions').style.display = 'flex';
+          }
+        } catch (e) {
+          if (e.message !== 'Unexpected end of JSON input') {
+            showError(e.message);
+          }
+        }
+      }
+    }
+
+    finalRender();
+    document.getElementById('report-actions').style.display = 'flex';
+
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function scheduleRender() {
+  if (renderTimer) return;
+  renderTimer = setTimeout(() => {
+    renderTimer = null;
+    renderMarkdown(true);
+  }, 120);
+}
+
+function finalRender() {
+  if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
+  renderMarkdown(false);
+}
+
+function renderMarkdown(streaming) {
+  const html = marked.parse(accText || '');
+  streamEl.innerHTML = html + (streaming ? '<span class="cursor"></span>' : '');
+}
+
+function showError(msg) {
+  showView('upload');
+  uploadView.style.opacity = '1';
+  analyzeBtn.disabled = false;
+  btnText.textContent = 'Run Deep Analysis';
+  alert('Analysis failed: ' + msg);
+}
+
+// ─── TOC SCROLL SPY ──────────────────────────────────────
+const tocLinks = document.querySelectorAll('.toc-link');
+
+// Since the markdown renders dynamically, we watch for h2 tags appearing
+const tocObserver = new MutationObserver(() => {
+  attachScrollSpy();
+});
+
+tocObserver.observe(streamEl, { childList: true, subtree: true });
+
+function attachScrollSpy() {
+  const headings = streamEl.querySelectorAll('h2');
+  if (!headings.length) return;
+
+  const iObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const idx = Array.from(headings).indexOf(e.target);
+        tocLinks.forEach(l => l.classList.remove('active'));
+        if (tocLinks[idx]) tocLinks[idx].classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  headings.forEach(h => iObs.observe(h));
+}
+
+tocLinks.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const headings = streamEl.querySelectorAll('h2');
+    const idx = Array.from(tocLinks).indexOf(link);
+    if (headings[idx]) {
+      headings[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+
+// ─── DOWNLOAD AS WORD DOC ────────────────────────────────
+document.getElementById('download-btn').addEventListener('click', () => {
+  const name  = currentFile?.name?.replace(/\.[^.]+$/, '') || 'report';
+  const date  = document.getElementById('report-time').textContent;
+  const file  = document.getElementById('report-file').textContent;
+  const title = document.getElementById('report-name').textContent;
+  const bodyHtml = marked.parse(accText);
+
+  const wordDoc = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<!--[if gte mso 9]><xml>
+  <w:WordDocument>
+    <w:View>Print</w:View><w:Zoom>100</w:Zoom>
+    <w:DoNotOptimizeForBrowser/>
+  </w:WordDocument>
+</xml><![endif]-->
+<style>
+  @page WordSection1 {
+    size: 210mm 297mm;
+    margin: 2.8cm 3.2cm;
+    mso-header-margin: 1.5cm;
+    mso-footer-margin: 1.5cm;
+  }
+  div.WordSection1 { page: WordSection1; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 11pt; color: #1c1c1c; line-height: 1.75;
+  }
+  .cover {
+    text-align: center; margin-bottom: 44pt;
+    padding-bottom: 20pt; border-bottom: 1.5pt solid #c9a347;
+  }
+  .brand {
+    font-family: Arial, sans-serif; font-size: 10pt;
+    letter-spacing: 7pt; color: #c9a347; text-transform: uppercase;
+    margin-bottom: 14pt;
+  }
+  .doc-title {
+    font-family: Georgia, serif; font-size: 22pt;
+    font-weight: normal; color: #111; line-height: 1.3;
+    margin-bottom: 14pt;
+  }
+  .doc-meta {
+    font-family: Arial, sans-serif; font-size: 9pt;
+    color: #888; line-height: 1.9;
+  }
+  h1 {
+    font-family: Georgia, serif; font-size: 17pt; font-weight: normal;
+    color: #111; margin-top: 30pt; margin-bottom: 10pt;
+    border-bottom: 1pt solid #c9a347; padding-bottom: 5pt;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-family: Georgia, serif; font-size: 14pt; font-weight: normal;
+    color: #1c1c1c; margin-top: 22pt; margin-bottom: 8pt;
+    border-left: 3pt solid #c9a347; padding-left: 10pt;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-family: Georgia, serif; font-size: 12pt;
+    color: #333; margin-top: 16pt; margin-bottom: 6pt;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-family: Arial, sans-serif; font-size: 9pt;
+    color: #9a7a30; letter-spacing: 2pt; text-transform: uppercase;
+    margin-top: 12pt; margin-bottom: 5pt; font-weight: bold;
+    page-break-after: avoid;
+  }
+  p { margin-bottom: 8pt; orphans: 3; widows: 3; }
+  strong { color: #111; }
+  em { color: #9a7a30; font-style: italic; }
+  ul, ol { margin-left: 18pt; margin-bottom: 9pt; }
+  li { margin-bottom: 4pt; }
+  table {
+    border-collapse: collapse; width: 100%;
+    margin: 14pt 0; font-size: 10pt;
+    border: 1pt solid #d4c4a0;
+  }
+  thead { border-bottom: 1.5pt solid #c9a347; }
+  th {
+    font-family: Arial, sans-serif; font-size: 8.5pt;
+    letter-spacing: 1.5pt; text-transform: uppercase;
+    color: #7a5e1a; padding: 8pt 12pt; text-align: left;
+    background-color: #faf6ec;
+    border-right: 1pt solid #e8dcc8;
+  }
+  td {
+    border: 1pt solid #ece4d4; padding: 7pt 12pt;
+    vertical-align: top; line-height: 1.55;
+  }
+  tr:nth-child(even) td { background-color: #fdfaf5; }
+  blockquote {
+    border-left: 3pt solid #c9a347; padding: 8pt 14pt;
+    margin: 12pt 0; background-color: #fdf9f0;
+    font-style: italic; color: #555;
+  }
+  code {
+    font-family: 'Courier New', monospace; font-size: 9pt;
+    background: #f4f4f4; padding: 1pt 4pt;
+  }
+  pre {
+    font-family: 'Courier New', monospace; font-size: 9pt;
+    background: #f4f4f4; padding: 10pt; margin: 10pt 0;
+    border-left: 3pt solid #c9a347;
+  }
+  hr { border: none; border-top: 1pt solid #e0d4b8; margin: 20pt 0; }
+  .footnote {
+    margin-top: 36pt; padding-top: 10pt;
+    border-top: 1pt solid #e0d4b8;
+    font-family: Arial, sans-serif; font-size: 8pt;
+    color: #bbb; text-align: center; line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+<div class="WordSection1">
+  <div class="cover">
+    <div class="brand">NEXUS · Deep Tech Intelligence</div>
+    <div class="doc-title">${title}</div>
+    <div class="doc-meta">
+      Generated: ${date}<br>
+      Model: Qwen2.5 72B · NEXUS Protocol<br>
+      Source: ${file}
+    </div>
+  </div>
+  ${bodyHtml}
+  <div class="footnote">
+    This report was generated by NEXUS Deep Tech Intelligence. For reference only — not investment advice.<br>
+    © ${new Date().getFullYear()} NEXUS Intelligence Platform · All rights reserved
+  </div>
+</div>
+</body>
+</html>`;
+
+  const blob = new Blob(['﻿' + wordDoc], { type: 'application/msword;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `NEXUS_Report_${name}_${new Date().toISOString().split('T')[0]}.doc`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ─── NEW ANALYSIS ─────────────────────────────────────────
+document.getElementById('new-btn').addEventListener('click', () => {
+  currentFile = null;
+  fileStrip.classList.remove('on');
+  fileInput.value = '';
+  analyzeBtn.disabled = true;
+  btnText.textContent = 'Run Deep Analysis';
+  accText = '';
+  streamEl.innerHTML = '';
+  document.getElementById('report-actions').style.display = 'none';
+  uploadView.style.opacity = '0';
+  showView('upload');
+  setTimeout(() => {
+    uploadView.style.transition = 'opacity 0.4s';
+    uploadView.style.opacity = '1';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 50);
+});
+</script>
+
+</body>
+</html>
