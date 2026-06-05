@@ -28,6 +28,10 @@ else
 fi
 
 # ── Pull model ───────────────────────────────────────────
+# Point Ollama to the project's model folder
+export OLLAMA_MODELS="$(pwd)/model"
+echo "      Using model path: $OLLAMA_MODELS"
+
 # Check if model already exists (copied manually via SCP)
 if ollama list 2>/dev/null | grep -q "llama3.3"; then
   echo "[3/5] llama3.3:70b already present — skipping download"
