@@ -5,6 +5,7 @@ const mammoth = require('mammoth');
 const unzipper = require('unzipper');
 const pdfParse = require('pdf-parse');
 const path = require('path');
+const fs   = require('fs');
 
 const app = express();
 const upload = multer({
@@ -141,6 +142,15 @@ async function extractPPTX(buffer) {
 
 app.use(express.static('public'));
 
+app.get('/models', (_req, res) => {
+  try {
+    const models = JSON.parse(fs.readFileSync('./models.json', 'utf-8'));
+    res.json(models);
+  } catch {
+    res.json([]);
+  }
+});
+
 app.get('/health', async (_req, res) => {
   try {
     const r = await fetch(`${OLLAMA_HOST}/api/tags`, { signal: AbortSignal.timeout(3000) });
@@ -154,7 +164,8 @@ app.get('/health', async (_req, res) => {
 });
 
 app.post('/analyze', upload.single('file'), async (req, res) => {
-  const file = req.file;
+  const file  = req.file;
+  const model = req.body.model || OLLAMA_MODEL;
   if (!file) return res.status(400).json({ error: 'No file uploaded.' });
 
   res.setHeader('Content-Type', 'text/event-stream');
@@ -181,7 +192,7 @@ app.post('/analyze', upload.single('file'), async (req, res) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: OLLAMA_MODEL,
+        model: model,
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user',   content: userMessage }

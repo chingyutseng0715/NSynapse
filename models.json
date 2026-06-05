@@ -1,0 +1,28 @@
+[
+  {
+    "id": "llama3.3:70b",
+    "label": "Llama 3.3 70B",
+    "description": "Best quality — requires ~43GB VRAM",
+    "default": true
+  },
+  {
+    "id": "llama3.1:8b",
+    "label": "Llama 3.1 8B",
+    "description": "Fast & lightweight — requires ~5GB VRAM"
+  },
+  {
+    "id": "llama3.1:70b",
+    "label": "Llama 3.1 70B",
+    "description": "Strong reasoning — requires ~43GB VRAM"
+  },
+  {
+    "id": "qwen2.5:72b",
+    "label": "Qwen 2.5 72B",
+    "description": "Best multilingual — requires ~43GB VRAM"
+  },
+  {
+    "id": "deepseek-r1:70b",
+    "label": "DeepSeek R1 70B",
+    "description": "Reasoning model — requires ~43GB VRAM"
+  }
+]

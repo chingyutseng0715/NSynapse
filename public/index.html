@@ -252,6 +252,45 @@
     }
     .fremove:hover { color: var(--red); }
 
+    /* Model selector */
+    .model-select-wrap {
+      margin-top: 14px; position: relative;
+    }
+
+    .model-select-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; color: var(--text3);
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+
+    .model-select {
+      width: 100%; padding: 13px 40px 13px 16px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border); border-radius: 3px;
+      color: var(--text); font-family: 'Outfit', sans-serif;
+      font-size: 14px; font-weight: 300;
+      cursor: pointer; appearance: none;
+      transition: border-color 0.2s;
+    }
+
+    .model-select:hover { border-color: var(--border-hover); }
+    .model-select:focus { outline: none; border-color: var(--gold); }
+
+    .model-select option {
+      background: #0e1117; color: var(--text);
+    }
+
+    .model-arrow {
+      position: absolute; right: 14px; bottom: 14px;
+      pointer-events: none; color: var(--text3); font-size: 10px;
+    }
+
+    .model-desc {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--text3); margin-top: 6px;
+      min-height: 14px; transition: color 0.2s;
+    }
+
     /* Analyze button */
     .analyze-btn {
       width: 100%; margin-top: 16px; padding: 17px 32px;
@@ -707,6 +746,15 @@
           <button class="fremove" id="fremove" title="Remove">✕</button>
         </div>
 
+        <div class="model-select-wrap">
+          <div class="model-select-label">Model</div>
+          <select class="model-select" id="model-select">
+            <option value="">Loading models...</option>
+          </select>
+          <div class="model-arrow">▾</div>
+          <div class="model-desc" id="model-desc"></div>
+        </div>
+
         <button class="analyze-btn" id="analyze-btn" disabled>
           <span id="btn-text">Run Deep Analysis</span>
         </button>
@@ -818,7 +866,7 @@
           <div class="report-name" id="report-name">Due Diligence Report</div>
           <div class="report-meta-row">
             <div class="meta-chip">Generated: <span id="report-time"></span></div>
-            <div class="meta-chip">Model: <span>Llama 3.3 70B · Local</span></div>
+            <div class="meta-chip">Model: <span id="report-model">—</span></div>
             <div class="meta-chip">Source: <span id="report-file"></span></div>
           </div>
         </div>
@@ -884,6 +932,32 @@ function tick() {
 
 resize(); initPts(); tick();
 window.addEventListener('resize', () => { resize(); initPts(); });
+
+// ─── LOAD MODELS ─────────────────────────────────────────
+const modelSelect = document.getElementById('model-select');
+const modelDesc   = document.getElementById('model-desc');
+let   modelsData  = [];
+
+async function loadModels() {
+  try {
+    const res = await fetch('/models');
+    modelsData = await res.json();
+    modelSelect.innerHTML = modelsData.map(m =>
+      `<option value="${m.id}" ${m.default ? 'selected' : ''}>${m.label}</option>`
+    ).join('');
+    updateModelDesc();
+  } catch {
+    modelSelect.innerHTML = '<option value="">Could not load models</option>';
+  }
+}
+
+function updateModelDesc() {
+  const selected = modelsData.find(m => m.id === modelSelect.value);
+  modelDesc.textContent = selected ? selected.description : '';
+}
+
+modelSelect.addEventListener('change', updateModelDesc);
+loadModels();
 
 // ─── UPLOAD LOGIC ────────────────────────────────────────
 const dropZone   = document.getElementById('drop-zone');
@@ -1006,7 +1080,9 @@ async function startAnalysis() {
 
   // Set report metadata
   document.getElementById('report-name').textContent = currentFile.name.replace(/\.[^.]+$/, '') + ' · Due Diligence Report';
-  document.getElementById('report-time').textContent = new Date().toLocaleString('zh-CN');
+  document.getElementById('report-time').textContent = new Date().toLocaleString('en-US');
+  const selectedModel = modelsData.find(m => m.id === modelSelect.value);
+  document.getElementById('report-model').textContent = selectedModel ? selectedModel.label + ' · Local' : modelSelect.value;
   document.getElementById('report-file').textContent = currentFile.name;
 
   // Run steps animation in parallel with API call
@@ -1015,6 +1091,7 @@ async function startAnalysis() {
   try {
     const formData = new FormData();
     formData.append('file', currentFile);
+    formData.append('model', modelSelect.value);
 
     const resp = await fetch('/analyze', {
       method: 'POST',
