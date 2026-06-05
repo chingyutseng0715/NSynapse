@@ -28,8 +28,8 @@ else
 fi
 
 # ── Pull model ───────────────────────────────────────────
-echo "[3/5] Pulling qwen2.5:72b (this will take a while on first run)..."
-ollama pull qwen2.5:72b
+echo "[3/5] Pulling llama3.3:70b (this will take a while on first run — ~43GB)..."
+ollama pull llama3.3:70b
 
 # ── App dependencies ─────────────────────────────────────
 echo "[4/5] Installing app dependencies..."
