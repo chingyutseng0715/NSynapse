@@ -28,8 +28,10 @@ else
 fi
 
 # ── Pull model ───────────────────────────────────────────
-# Point Ollama to the project's model folder
+# Point Ollama to the project's model folder — set permanently for this user
 export OLLAMA_MODELS="$(pwd)/model"
+echo "OLLAMA_MODELS=$OLLAMA_MODELS" >> ~/.bashrc
+echo "OLLAMA_MODELS=$OLLAMA_MODELS" >> ~/.profile
 echo "      Using model path: $OLLAMA_MODELS"
 
 # Check if model already exists (copied manually via SCP)
@@ -48,7 +50,8 @@ npm install
 echo "[5/5] Setting up PM2 process manager..."
 sudo npm install -g pm2
 pm2 delete nexus 2>/dev/null || true
-pm2 start server.js --name nexus
+pm2 start server.js --name nexus --env production
+pm2 set pm2:OLLAMA_MODELS "$(pwd)/model"
 pm2 save
 pm2 startup | tail -1 | sudo bash || true
 
