@@ -4,8 +4,9 @@ const multer  = require('multer');
 const mammoth = require('mammoth');
 const unzipper = require('unzipper');
 const pdfParse = require('pdf-parse');
-const path = require('path');
-const fs   = require('fs');
+const path   = require('path');
+const fs     = require('fs');
+const { spawn, execSync } = require('child_process');
 
 const app = express();
 const upload = multer({
@@ -15,6 +16,40 @@ const upload = multer({
 
 const OLLAMA_HOST  = process.env.OLLAMA_HOST  || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.1:8b';
+const MODELS_DIR   = path.resolve(process.env.OLLAMA_MODELS || './model');
+
+async function ensureOllama() {
+  // Check if already running
+  try {
+    await fetch(`${OLLAMA_HOST}/api/tags`, { signal: AbortSignal.timeout(2000) });
+    console.log('  Ollama already running');
+    return;
+  } catch {}
+
+  // Start Ollama
+  console.log('  Starting Ollama...');
+  const proc = spawn('ollama', ['serve'], {
+    detached: true,
+    stdio: 'ignore',
+    shell: process.platform === 'win32'
+  });
+  proc.unref();
+
+  // Wait up to 15s for Ollama to be ready
+  for (let i = 0; i < 15; i++) {
+    await new Promise(r => setTimeout(r, 1000));
+    try {
+      const r    = await fetch(`${OLLAMA_HOST}/api/tags`, { signal: AbortSignal.timeout(1000) });
+      const data = await r.json();
+      const models = (data.models || []).map(m => m.name);
+      console.log(`  Ollama ready — models: ${models.join(', ') || 'none found'}`);
+      return;
+    } catch {}
+  }
+  console.warn('  Warning: Ollama did not start in time — start it manually with: ollama serve');
+}
+
+ensureOllama();
 
 const SYSTEM_PROMPT = `Role: Managing Partner, Global Deep Tech Fund
 
@@ -204,7 +239,7 @@ app.post('/analyze', upload.single('file'), async (req, res) => {
           num_predict: 8192
         }
       }),
-      signal: AbortSignal.timeout(300000) // 5 min timeout
+      keepalive: true
     });
 
     if (!ollamaRes.ok) {
