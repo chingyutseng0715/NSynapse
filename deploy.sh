@@ -28,8 +28,13 @@ else
 fi
 
 # ── Pull model ───────────────────────────────────────────
-echo "[3/5] Pulling llama3.3:70b (this will take a while on first run — ~43GB)..."
-ollama pull llama3.3:70b
+# Check if model already exists (copied manually via SCP)
+if ollama list 2>/dev/null | grep -q "llama3.3"; then
+  echo "[3/5] llama3.3:70b already present — skipping download"
+else
+  echo "[3/5] Model not found locally, pulling llama3.3:70b (~43GB)..."
+  ollama pull llama3.3:70b
+fi
 
 # ── App dependencies ─────────────────────────────────────
 echo "[4/5] Installing app dependencies..."
